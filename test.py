@@ -2,9 +2,25 @@ from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import sys
 import os
+import ctypes
+python_dll = os.path.join(sys.exec_prefix, 'python313.dll')
 
+# Load it
+try:
+    ctypes.WinDLL(python_dll)
+    print("✅ Python DLL loaded successfully from:", python_dll)
+except OSError as e:
+    print("❌ Failed to load Python DLL:", e)
+# Add the root folder to sys.path dynamically (3 levels up from this file)
+import sys
+sys.path.append("C:/Users/Dell/route_optimizer/cpp_backend/build/release")  # put your actual path here
+
+import route_optimizer as ro
+
+print("Module imported successfully!")
+print(dir(ro))  
 # Setup for compiled C++ module
-module_path = os.path.abspath("cpp_backend")
+module_path = os.path.abspath("cpp_backend/build/release")
 if module_path not in sys.path:
     sys.path.insert(0, module_path)
 
