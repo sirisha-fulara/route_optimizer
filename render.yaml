@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: flask-cpp-app
+    runtime: python
+    buildCommand: ""
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "TRUE"

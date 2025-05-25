@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>City Route Optimizer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scroll-behavior: smooth;
+            background: linear-gradient(120deg, #1e1e2f, #23293e);
+            color: #fff;
+        }
+
+        #site-header {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1;
+        }
+
+        #site-logo {
+            height: 40px;
+            width: auto;
+            cursor: pointer;
+            filter: drop-shadow(0 0 6px rgba(0, 198, 255, 0.4));
+            transition: transform 0.2s ease-in-out;
+        }
+
+        #site-logo:hover {
+            transform: scale(1.1);
+        }
+
+        section {
+            width: 100vw;
+            padding: 60px 20px;
+            box-sizing: border-box;
+            scroll-snap-align: start;
+            transition: background 0.5s ease;
+        }
+
+        #wave-hero {
+            height: 100vh;
+            background: black;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        canvas#wave-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            filter: drop-shadow(0 0 6px rgba(247, 37, 133, 0.3));
+        }
+
+        #wave-hero h1,
+        #wave-hero p {
+            z-index: 2;
+            margin: 0.5em;
+            text-align: center;
+        }
+
+        #wave-hero h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        #wave-hero p {
+            font-size: 1.3em;
+            color: #ccc;
+        }
+
+        #optimizer-section {
+            background: linear-gradient(135deg, #2a2a40, #1f1f30);
+            border-radius: 20px;
+            max-width: 900px;
+            margin: 60px auto;
+            box-shadow: 0 0 30px rgba(0, 198, 255, 0.15);
+            padding: 50px 40px;
+            transition: all 0.3s ease-in-out;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00c6ff;
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+
+        #city-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .city-input {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        label {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        select {
+            flex: 2;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: #1a1a2e;
+            color: #00c6ff;
+            font-size: 1em;
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.1);
+        }
+
+
+        select:focus {
+            border-color: rgba(0, 198, 255, 0.8);
+        }
+
+        button {
+            background: #00c6ff;
+            background: linear-gradient(to right, #0072ff, #00c6ff);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            box-shadow: 0 0 10px #00c6ff, 0 0 20px #0072ff;
+            transform: scale(1.05);
+        }
+
+        .remove-stop-btn {
+            background: #ff4b2b;
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+        }
+
+        #loading-spinner {
+            margin: 20px 0;
+            color: #00c6ff;
+            font-weight: bold;
+            display: none;
+        }
+
+        #output {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 10px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.2);
+        }
+
+        #map {
+            height: 400px;
+            margin-top: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media screen and (max-width: 600px) {
+            #optimizer-section {
+                padding: 20px;
+            }
+
+            .city-input {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            select {
+                width: 100%;
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(10px);
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <header id="site-header">
+        <img  src="https://img.icons8.com/skeuomorphism/32/audio-wave.png" id="site-logo"/>
+    </header>
+    <section id="wave-hero">
+        <canvas id="wave-canvas"></canvas>
+        <h1>WaveRoute Optimizer</h1>
+        <p>Ride the wave of smarter, faster city routing 🚀</p>
+    </section>
+
+    <section id="optimizer-section">
+        <h2>City Route Optimizer</h2>
+        <div id="city-inputs">
+            <div class="city-input">
+                <label>Start City: </label>
+                <select class="city-select">
+                    <option value="">--Select--</option>
+                </select>
+            </div>
+            <div class="city-input">
+                <label>End City: </label>
+                <select class="city-select">
+                    <option value="">--Select--</option>
+                </select>
+            </div>
+        </div>
+        <button id="add-stop-btn">Add Stop</button>
+        <button id="generate-route-btn">Generate Route</button>
+        <div id="loading-spinner">Calculating route... ⏳</div>
+        <button id="download-btn" style="display:none;">Download Route</button>
+        <div id="output"></div>
+        <div id="map"></div>
+    </section>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const canvas = document.getElementById("wave-canvas");
+        const ctx = canvas.getContext("2d");
+
+        let width, height;
+        let waveOffset = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function drawWave(offsetY, colors) {
+            const waveHeight = 50;
+            const waveLength = width / 2;
+
+            ctx.beginPath();
+            ctx.moveTo(0, height / 2 + offsetY);
+
+            for (let x = 0; x <= width; x += 10) {
+                const y = Math.sin((x / waveLength) * 2 * Math.PI + waveOffset) * waveHeight;
+                ctx.lineTo(x, height / 2 + y + offsetY);
+            }
+
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
+
+            const gradient = ctx.createLinearGradient(0, height / 2 + offsetY - waveHeight, 0, height);
+            gradient.addColorStop(0, colors[0]);
+            gradient.addColorStop(0.5, colors[1]);
+            gradient.addColorStop(1, colors[2]);
+
+            ctx.fillStyle = gradient;
+
+            // Softer glow
+            ctx.shadowColor = colors[2].replace('ff', '88') || colors[2]; // fallback if no 'ff' in string
+            ctx.shadowBlur = 10;
+
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = "transparent";
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            drawWave(0, ['rgba(58,28,113,0.6)', 'rgba(91,42,159,0.5)', 'rgba(247,37,133,0.4)']);
+            drawWave(15, ['rgba(91,42,159,0.5)', 'rgba(199,75,255,0.4)', 'rgba(247,37,133,0.3)']);
+            drawWave(30, ['rgba(138,67,214,0.5)', 'rgba(199,75,255,0.4)', 'rgba(247,37,133,0.3)']);
+
+            waveOffset += 0.03;
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        const cities = {
+            Delhi: { lat: 28.7041, lon: 77.1025 },
+            Mumbai: { lat: 19.076, lon: 72.8777 },
+            Bangalore: { lat: 12.9716, lon: 77.5946 },
+            Kolkata: { lat: 22.5726, lon: 88.3639 },
+            Chennai: { lat: 13.0827, lon: 80.2707 },
+        };
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = ((lat2 - lat1) * Math.PI) / 180;
+            const dLon = ((lon2 - lon1) * Math.PI) / 180;
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos((lat1 * Math.PI) / 180) *
+                Math.cos((lat2 * Math.PI) / 180) *
+                Math.sin(dLon / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function populateCitySelects() {
+            const selects = document.querySelectorAll(".city-select");
+            selects.forEach((select) => {
+                select.innerHTML = '<option value="">--Select--</option>';
+                for (const city in cities) {
+                    const option = document.createElement("option");
+                    option.value = city;
+                    option.textContent = city;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        populateCitySelects();
+
+        document.getElementById("add-stop-btn").onclick = () => {
+            const div = document.createElement("div");
+            div.className = "city-input";
+            div.innerHTML = `<label>Stop City: </label>
+      <select class="city-select">
+        <option value="">--Select--</option>
+      </select>
+      <button class="remove-stop-btn" style="margin-left:10px;">Remove</button>`;
+            document.getElementById("city-inputs").appendChild(div);
+            populateCitySelects();
+
+            div.querySelector(".remove-stop-btn").onclick = () => {
+                div.remove();
+            };
+        };
+
+        let map;
+        let routeLine;
+
+        function initMap() {
+            map = L.map("map").setView([20, 80], 5);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 18,
+                attribution: "© OpenStreetMap",
+            }).addTo(map);
+        }
+
+        function clearMap() {
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+        }
+
+        function drawRoute(routeCoords) {
+            clearMap();
+            routeLine = L.polyline(routeCoords, { color: "blue" }).addTo(map);
+            map.fitBounds(routeLine.getBounds());
+        }
+
+        document.getElementById("download-btn").onclick = () => {
+            const text = document.getElementById("output").innerText;
+            const blob = new Blob([text], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "route.txt";
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        const openRouteServiceApiKey = "5b3ce3597851110001cf6248612479d88b0e4e5787912363503df87b";
+
+        async function getRouteFromORS(coords) {
+            const orsApiKey = "5b3ce3597851110001cf6248612479d88b0e4e5787912363503df87b";  // <--- Replace with your actual API key
+            const body = {
+                coordinates: coords.map(([lat, lon]) => [lon, lat]),
+                instructions: false,
+                format: "geojson",
+            };
+            try {
+                const res = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": orsApiKey,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
+                });
+
+                if (!res.ok) throw new Error("ORS API error");
+
+                return await res.json();
+            } catch (err) {
+                console.error("Error fetching ORS route:", err);
+                alert("Failed to get route from ORS. Check console for details.");
+                return null;
+            }
+        }
+
+        document.getElementById("generate-route-btn").onclick = async () => {
+            const loading = document.getElementById("loading-spinner");
+            loading.style.display = "block";
+            document.getElementById("generate-route-btn").disabled = true;
+
+            const selects = [...document.querySelectorAll(".city-select")];
+            const selectedCities = selects.map(sel => sel.value).filter(city => city !== "");
+
+            if (selectedCities.length < 2) {
+                alert("Select at least start and end cities!");
+                loading.style.display = "none";
+                document.getElementById("generate-route-btn").disabled = false;
+                return;
+            }
+
+            const uniqueCities = new Set(selectedCities);
+            if (uniqueCities.size !== selectedCities.length) {
+                alert("Please select different cities!");
+                loading.style.display = "none";
+                document.getElementById("generate-route-btn").disabled = false;
+                return;
+            }
+
+            const coords = selectedCities.map(city => {
+                const { lat, lon } = cities[city];
+                return [lat, lon];
+            });
+
+            const geojson = await getRouteFromORS(coords);
+            if (!geojson) {
+                loading.style.display = "none";
+                document.getElementById("generate-route-btn").disabled = false;
+                return;
+            }
+            const routeCoords = geojson.features[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+            const summary = geojson.features[0].properties.summary;
+
+            drawRoute(routeCoords);
+
+            let outputHTML = "<h3>Route Details:</h3><ol>";
+            outputHTML += `${selectedCities[0]} -> ${selectedCities[1]}`;
+            outputHTML += "</ol>";
+            outputHTML += `<p><b>Total Distance:</b> ${(summary.distance / 1000).toFixed(2)} km</p>`;
+            outputHTML += `<p><b>Estimated Total Time:</b> ${(summary.duration / 3600).toFixed(2)} hours</p>`;
+
+            document.getElementById("output").innerHTML = outputHTML;
+
+            document.getElementById("download-btn").style.display = "inline-block";
+            loading.style.display = "none";
+            document.getElementById("generate-route-btn").disabled = false;
+        };
+
+        initMap();
+    </script>
+</body>
+
+</html>
