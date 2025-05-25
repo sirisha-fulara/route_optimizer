@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: flask-cpp-app
+    name: route-optimizer
     runtime: python
-    buildCommand: ""
-    startCommand: gunicorn app:app
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn test:app
     envVars:
       - key: PYTHONUNBUFFERED
         value: "TRUE"
