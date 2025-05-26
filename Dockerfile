@@ -18,7 +18,9 @@ COPY . .
 
 # Compile your C++ code into shared object (.so)
 RUN g++ -O3 -Wall -shared -std=c++17 -fPIC \
+    -I$(python3 -m pybind11 --includes | sed -e 's/-I//g') \
     cpp_backend/route_optimizer.cpp -o cpp_backend/route_optimizer.cpython-312-x86_64-linux-gnu.so
+
 
 # Expose the port your app will run on
 EXPOSE 10000
