@@ -20,10 +20,10 @@ RUN pip3 install -r requirements.txt
 COPY . .
 
 # Compile your C++ code into shared object (.so) using bash for proper command substitution
-RUN /bin/bash -c "\
-    INCLUDES=$(python3 -m pybind11 --includes) && \
-    eval g++ -O3 -Wall -shared -std=c++17 -fPIC $INCLUDES \
-    cpp_backend/route_optimizer.cpp -o cpp_backend/route_optimizer.cpython-312-x86_64-linux-gnu.so"
+RUN /bin/bash -c '\
+    INCLUDES="$(python3 -m pybind11 --includes)" && \
+    g++ -O3 -Wall -shared -std=c++17 -fPIC $INCLUDES \
+    cpp_backend/route_optimizer.cpp -o cpp_backend/route_optimizer.cpython-312-x86_64-linux-gnu.so'
 
 # Expose the port your app will run on
 EXPOSE 10000
