@@ -5,20 +5,30 @@ import os
 import ctypes
 python_dll = os.path.join(sys.exec_prefix, 'python313.dll')
 
-# Load it
+# Load it remove in git 
 try:
-    ctypes.WinDLL(python_dll)
+    ctypes.WinDLL(python_dll) 
     print("✅ Python DLL loaded successfully from:", python_dll)
 except OSError as e:
     print("❌ Failed to load Python DLL:", e)
 # Add the root folder to sys.path dynamically (3 levels up from this file)
-import sys
-sys.path.append("C:/Users/Dell/route_optimizer/cpp_backend/build/release")  # put your actual path here
+#linus code for render 
+# import importlib.util
+# # Set correct relative path to .so file
+# cpp_backend_dir = os.path.abspath("cpp_backend")
+# so_path = os.path.join(cpp_backend_dir, "route_optimizer.cpython-312-x86_64-linux-gnu.so")
 
-import route_optimizer as ro
+# # Add cpp_backend to sys.path if needed
+# if cpp_backend_dir not in sys.path:
+#     sys.path.insert(0, cpp_backend_dir)
 
-print("Module imported successfully!")
-print(dir(ro))  
+# # Dynamically load the shared object (.so)
+# spec = importlib.util.spec_from_file_location("route_optimizer", so_path)
+# route_optimizer = importlib.util.module_from_spec(spec)
+# spec.loader.exec_module(route_optimizer)
+
+print("✅ C++ backend (.so) module loaded successfully.") 
+
 # Setup for compiled C++ module
 module_path = os.path.abspath("cpp_backend/build/release")
 if module_path not in sys.path:
