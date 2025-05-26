@@ -23,7 +23,9 @@ COPY . .
 RUN /bin/bash -c '\
     INCLUDES="$(python3 -m pybind11 --includes)" && \
     g++ -O3 -Wall -shared -std=c++17 -fPIC $INCLUDES \
-    cpp_backend/route_optimizer.cpp -o cpp_backend/route_optimizer.cpython-312-x86_64-linux-gnu.so'
+    cpp_backend/route_optimizer.cpp cpp_backend/graph.cpp cpp_backend/dijkstra.cpp \
+    -o cpp_backend/route_optimizer.cpython-312-x86_64-linux-gnu.so'
+
 
 # Expose the port your app will run on
 EXPOSE 10000
